@@ -11,7 +11,7 @@ public class GameLoop extends JFrame implements ActionListener {
 	private GamePanel gamePanel = new GamePanel();
 	private JButton startButton = new JButton("Start");
 	private JButton quitButton = new JButton("Quit");
-	private JButton pauseButton = new JButton("Pause");
+
 	private boolean running = false;
 	private boolean paused = false;
 	private int fps = 60;
@@ -24,7 +24,7 @@ public class GameLoop extends JFrame implements ActionListener {
 		JPanel p = new JPanel();
 		p.setLayout(new GridLayout(1, 2));
 		p.add(startButton);
-		p.add(pauseButton);
+
 		p.add(quitButton);
 		cp.add(gamePanel, BorderLayout.CENTER);
 		cp.add(p, BorderLayout.SOUTH);
@@ -32,7 +32,7 @@ public class GameLoop extends JFrame implements ActionListener {
 
 		startButton.addActionListener(this);
 		quitButton.addActionListener(this);
-		pauseButton.addActionListener(this);
+
 
 		gamePanel.initTriangle();
 
@@ -52,13 +52,6 @@ public class GameLoop extends JFrame implements ActionListener {
 				runGameLoop();
 			} else {
 				startButton.setText("Start");
-			}
-		} else if (s == pauseButton) {
-			paused = !paused;
-			if (paused) {
-				pauseButton.setText("Unpause");
-			} else {
-				pauseButton.setText("Pause");
 			}
 		} else if (s == quitButton) {
 			System.exit(0);
@@ -202,8 +195,35 @@ public class GameLoop extends JFrame implements ActionListener {
 			triangle.update();
 			Iterator<Bullet> it = bulletList.iterator();
 			while (it.hasNext()) {
-				it.next().update();
+				Bullet tempBullet = it.next();
+				tempBullet.update();
+				if(isColliding(triangle,tempBullet)){
+					it.remove();
+					triangle.isDead = true;
+				}
 			}
+		}
+
+		private boolean isColliding(Triangle player, Bullet collidingBullet) {
+
+			float pX1 = player.x0 + player.x;
+			float pY1 = player.y0 + player.y;
+			float pX2 = player.x1+ player.x;
+			float pY2 = player.y1+ player.y;
+			float pX3 = player.x2+ player.x;
+			float pY3 = player.y2+ player.y;
+			float bX = collidingBullet.x;
+			float bY = collidingBullet.y;
+
+			float P12 = Math.abs((bX * pY1) + (pX1 * pY2) + (pX2 * bY) - (bX * pY2) - (pX2 * pY1) - (pX1 * bY)) / 2;
+			float P23 = Math.abs((bX * pY2) + (pX2 * pY3) + (pX3 * bY) - (bX * pY3) - (pX3 * pY2) - (pX2 * bY)) / 2;
+			float P13 = Math.abs((bX * pY1) + (pX1 * pY3) + (pX3 * bY) - (bX * pY3) - (pX3 * pY1) - (pX1 * bY)) / 2;
+			float pArea = Math.abs((pX1 * pY2) + (pX2 * pY3) + (pX3 * pY1) - (pX1 * pY3) - (pX3 * pY2) - (pX2 * pY1)) / 2;
+			
+			if (Math.abs((P12+P23+P13) - pArea) < 0.0005)
+				return true;
+
+			return false;
 		}
 
 		public void paintComponent(Graphics g) {
@@ -216,62 +236,54 @@ public class GameLoop extends JFrame implements ActionListener {
 			g.setColor(Color.RED);
 			int drawX = (int) ((triangle.x - triangle.lastX) * interpolation + triangle.lastX);
 			int drawY = (int) ((triangle.y - triangle.lastY) * interpolation + triangle.lastY);
-			int[] xPoints = {
-					drawX
-							+ triangle.rotateX((float) 0,
-									(float) triangle.height / 2, triangle.rot),
-					drawX
-							+ triangle.rotateX((float) triangle.width / 2,
-									(float) -triangle.height / 2, triangle.rot),
-					drawX
-							+ triangle.rotateX((float) -triangle.width / 2,
-									(float) -triangle.height / 2, triangle.rot) };
-			int[] yPoints = {
-					drawY
-							+ triangle.rotateY((float) 0,
-									(float) triangle.height / 2, triangle.rot),
-					drawY
-							+ triangle.rotateY((float) triangle.width / 2,
-									(float) -triangle.height / 2, triangle.rot),
-					drawY
-							+ triangle.rotateY((float) -triangle.width / 2,
-									(float) -triangle.height / 2, triangle.rot) };
+			int[] xPoints = { (int) (drawX + triangle.x0),
+					(int) (drawX + triangle.x1), (int) (drawX + triangle.x2) };
+			int[] yPoints = { (int) (drawY + triangle.y0),
+					(int) (drawY + triangle.y1), (int) (drawY + triangle.y2) };
 			g.drawPolygon(xPoints, yPoints, 3);
 
 			lastDrawX = drawX;
 			lastDrawY = drawY;
 
-			
 			g.setColor(Color.BLUE);
 			Iterator<Bullet> it = bulletList.iterator();
 			while (it.hasNext()) {
 				Bullet temp = it.next();
-				g.drawOval((int)temp.x, (int)temp.y, 2, 2);
+				g.drawOval((int) temp.x, (int) temp.y, 2, 2);
 			}
 
 			g.setColor(Color.BLACK);
-			g.drawString("FPS: " + fps, 5, 10);
-
+			if(triangle.deathCount < 20){
+				g.drawString("Death Count: " + triangle.deathCount, 5, 10);
+			} else {
+				g.drawString("GAME OVER" , 250, 250);
+			}
 			frameCount++;
 		}
 	}
 
 	private class Bullet { // refactor
 		float x, y;
+		float x1,y1;
 		float rot;
-		int speed;
+		float speed;
+		boolean isDead = false;
 
 		public Bullet(float initX, float initY, float initRot) {
-			x = initX;
-			y = initY;
+			
 			rot = initRot;
-			speed = 5;
+			x1 = rotateX(0,15,rot);
+			y1 = rotateY(0,15,rot);
+			x = initX + x1;
+			y = initY + y1;
+			speed = (float) 0.2;
 		}
 
 		public void update() {
-			x += speed * rotateX(0, 1, rot);
-			y += speed * rotateY(0, 1, rot);
 			
+			x += speed * (x1);
+			y += speed * (y1);
+
 			if (x > gamePanel.getWidth()) {
 
 				x = 0;
@@ -319,6 +331,10 @@ public class GameLoop extends JFrame implements ActionListener {
 		float xVelocity, yVelocity;
 		float speed;
 		float rot;// in degrees
+		float x0, x1, x2;
+		float y0, y1, y2;
+		boolean isDead = false;
+		int deathCount = 0;
 
 		public Triangle() {
 			width = 10;
@@ -331,6 +347,12 @@ public class GameLoop extends JFrame implements ActionListener {
 			yVelocity = 0;
 			rot = (float) 0;
 			speed = 0;
+			x0 = 0;
+			x1 = 0;
+			x2 = 0;
+			y0 = 0;
+			y1 = 0;
+			y2 = 0;
 
 		}
 
@@ -353,8 +375,16 @@ public class GameLoop extends JFrame implements ActionListener {
 		}
 
 		public void update() {
+			if(isDead == false){
 			lastX = x;
 			lastY = y;
+
+			x0 = rotateX(0, height / 2, rot);
+			x1 = rotateX(width / 2, -height / 2, rot);
+			x2 = rotateX(-width / 2, -height / 2, rot);
+			y0 = rotateY(0, height / 2, rot);
+			y1 = rotateY(width / 2, -height / 2, rot);
+			y2 = rotateY(-width / 2, -height / 2, rot);
 
 			xVelocity += speed * rotateX(0, height / 2, rot);
 			yVelocity += speed * rotateY(0, height / 2, rot);
@@ -378,6 +408,16 @@ public class GameLoop extends JFrame implements ActionListener {
 
 			} else if (y < 0) {
 				y = gamePanel.getHeight();
+			}
+			} else {
+				deathCount++;
+				isDead = false;
+				x = 250;
+				y = 250;
+				lastX = x;
+				lastY = y;
+				xVelocity = 0;
+				yVelocity = 0;
 			}
 		}
 
