@@ -27,7 +27,7 @@ public class GameLoop extends JFrame implements ActionListener {
 	private int frameCount = 0;
 
 	private boolean fireBullet = false;
-	private int bulletOwnerID;
+	private int bulletOwnerID = 0;
 
 	private boolean isServer = true;
 
@@ -139,6 +139,7 @@ public class GameLoop extends JFrame implements ActionListener {
 	
 	public void startGame(){
 		running = true;
+		runGameLoop();
 	}
 
 
