@@ -191,10 +191,10 @@ public class GameLoop extends JFrame implements ActionListener
       private void handleKey(KeyEvent e) {
           switch (e.getKeyCode()) {
               case KeyEvent.VK_UP:
-                  gamePanel.triangle.speed++;
+                  gamePanel.triangle.speed+= 0.05;
                   break;
               case KeyEvent.VK_DOWN:
-           	   gamePanel.triangle.speed--;
+           	   gamePanel.triangle.speed-= 0.05;
                   break;
               case KeyEvent.VK_LEFT:
            	   gamePanel.triangle.rot -= 5;
@@ -292,7 +292,11 @@ public class GameLoop extends JFrame implements ActionListener
       {
          lastX = x;
          lastY = y;
-
+         
+         xVelocity += speed * rotateX(0, height/2, rot);
+         yVelocity += speed * rotateY(0, height/2, rot);
+         
+         speed = 0;
          
          x += xVelocity;
          y += yVelocity;
