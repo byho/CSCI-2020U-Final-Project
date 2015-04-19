@@ -8,8 +8,9 @@ public class main {
 		GameLoop.getInstance().setVisible(true);
 		if(args.length == 1){
 			server = new Server(Integer.parseInt(args[0]));
-		} else if (args.length == 2){
-			client = new Client(args[0], Integer.parseInt(args[1]));
+		} else if (args.length == 3){
+			GameLoop.getInstance().setServer(false);
+			client = new Client(args[0], Integer.parseInt(args[1]), args[2]);
 		}
 	}
 

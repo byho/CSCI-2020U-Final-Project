@@ -53,38 +53,54 @@ public class Server implements Runnable {
 				return i;
 		return -1;
 	}
-	
-	private int findClient(String name){
-		for(int i = 0; i < clientCount; i++){
-			if(clientNames[i].equals(name))
+
+	private int findClient(String name) {
+		for (int i = 0; i < clientCount; i++) {
+			if (clientNames[i].equals(name))
 				return i;
 		}
 		return -1;
 	}
 
 	public synchronized void handle(int ID, String input) {
-		
+
 		String delims = "[ ]+";
+		String dataString = "";
 		String[] tokens = input.split(delims);
-		
+
 		if (input.equals(".bye")) {
 			clients[findClient(ID)].send(".bye");
 			remove(ID);
-		} else if (tokens[0].equals("login")){
-			clientNames[findClient(ID)] = tokens[1];
-		}else if (tokens[0].equals("send")){
-			String temp = "";
-			for(int i = 2; i < tokens.length; ++i){
-				temp.concat(tokens[i] + " ");
-			}
-			clients[findClient(tokens[1])].send(ID + " : " + temp);
-		}else if (tokens[0].equals("fetch")){
-			String temp = "";
-			for(int i = 0; i < clientCount; ++i){
-				temp.concat(clientNames[i] + " ");
-			}
-			clients[findClient(ID)].send(temp);
 		}
+		if (input.equals(tokens[0].equals("data"))) {
+			GameLoop.getInstance().setFireBullet(Boolean.valueOf(tokens[1]));
+			GameLoop.getInstance().setBulletOwner(Integer.valueOf(tokens[2]));
+			GameLoop.getInstance().setRemoteX(Integer.valueOf(tokens[3]));
+			GameLoop.getInstance().setRemoteY(Integer.valueOf(tokens[4]));
+			GameLoop.getInstance().setRemoteRot(Integer.valueOf(tokens[5]));
+		}
+		
+		if(GameLoop.getInstance().getRunning())
+			clients[findClient(ID)].send("start");
+
+		
+		String fireBullet = Boolean.toString(GameLoop.getInstance()
+				.isFireBullet());
+		String playerID = Integer
+				.toString(GameLoop.getInstance().gamePanel.triangle.id);
+		String playerX = Integer
+				.toString((int) GameLoop.getInstance().gamePanel.triangle.x);
+		String playerY = Integer
+				.toString((int) GameLoop.getInstance().gamePanel.triangle.y);
+		String playerRot = Integer
+				.toString((int) GameLoop.getInstance().gamePanel.triangle.rot);
+
+		dataString.concat("data " + fireBullet + " " + playerID + " " + playerX
+				+ " " + playerY + " " + playerRot);
+
+		clients[findClient(ID)].send(dataString);
+
+		// data fireBullet ID X Y Rot
 	}
 
 	public synchronized void remove(int ID) {
@@ -121,5 +137,4 @@ public class Server implements Runnable {
 					+ " reached.");
 	}
 
-	
 }

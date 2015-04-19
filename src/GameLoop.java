@@ -17,7 +17,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class GameLoop extends JFrame implements ActionListener {
-	private GamePanel gamePanel = new GamePanel();
+	protected GamePanel gamePanel = new GamePanel();
 	private JButton startButton = new JButton("Start");
 	private JButton quitButton = new JButton("Quit");
 
@@ -25,9 +25,71 @@ public class GameLoop extends JFrame implements ActionListener {
 	private boolean paused = false;
 	private int fps = 60;
 	private int frameCount = 0;
-	
+
+	private boolean fireBullet = false;
+	private int bulletOwnerID;
+
+	private boolean isServer = true;
+
+	private float remoteX = 0;
+	private float remoteY = 0;
+	private float remoteRot = 0;
+
 	private static GameLoop instance = null;
 	
+	public synchronized boolean getRunning(){
+		return running;
+	}
+
+	public synchronized float getRemoteX() {
+		return remoteX;
+	}
+
+	public synchronized void setRemoteX(float remoteX) {
+		this.remoteX = remoteX;
+	}
+
+	public synchronized float getRemoteY() {
+		return remoteY;
+	}
+
+	public synchronized void setRemoteY(float remoteY) {
+		this.remoteY = remoteY;
+	}
+
+	public synchronized float getRemoteRot() {
+		return remoteRot;
+	}
+
+	public synchronized void setRemoteRot(float remoteRot) {
+		this.remoteRot = remoteRot;
+	}
+
+	public synchronized boolean isFireBullet() {
+		return fireBullet;
+	}
+
+	public synchronized void setFireBullet(boolean fireBullet) {
+		this.fireBullet = fireBullet;
+	}
+
+	public synchronized int getBulletOwner() {
+		return bulletOwnerID;
+	}
+
+	public synchronized void setBulletOwner(int bulletOwner) {
+		this.bulletOwnerID = bulletOwnerID;
+	}
+
+	public synchronized boolean isServer() {
+		return isServer;
+	}
+
+	public synchronized void setServer(boolean isServer) {
+		this.isServer = isServer;
+	}
+	
+
 
 	protected GameLoop() {
 		super("Fixed Timestep Game Loop Test");
@@ -48,30 +110,37 @@ public class GameLoop extends JFrame implements ActionListener {
 		gamePanel.initTriangle();
 
 	}
-	
-	public synchronized static GameLoop getInstance(){
-		if(instance == null){
+
+	public synchronized static GameLoop getInstance() {
+		if (instance == null) {
 			instance = new GameLoop();
 		}
 		return instance;
 	}
 
-	
-
 	public void actionPerformed(ActionEvent e) {
 		Object s = e.getSource();
-		if (s == startButton) {
-			running = !running;
-			if (running) {
-				startButton.setText("Stop");
-				runGameLoop();
-			} else {
-				startButton.setText("Start");
+		if (isServer) {
+			if (s == startButton) {
+				running = !running;
 			}
-		} else if (s == quitButton) {
+		}
+		if (running) {
+			startButton.setText("Stop");
+			runGameLoop();
+		} else {
+			startButton.setText("Start");
+		}
+		if (s == quitButton) {
 			System.exit(0);
 		}
 	}
+
+	
+	public void startGame(){
+		running = true;
+	}
+
 
 	// Starts a new thread and runs the game loop in it.
 	public void runGameLoop() {
@@ -160,7 +229,7 @@ public class GameLoop extends JFrame implements ActionListener {
 		gamePanel.repaint();
 	}
 
-	private class GamePanel extends JPanel {
+	protected class GamePanel extends JPanel {
 		float interpolation;
 
 		int lastDrawX, lastDrawY;
@@ -193,8 +262,9 @@ public class GameLoop extends JFrame implements ActionListener {
 				gamePanel.triangle.rot += 5;
 				break;
 			case KeyEvent.VK_SPACE:
-				gamePanel.bulletList.add(new Bullet(triangle.x, triangle.y,
-						triangle.rot, triangle.id));
+				fireBullet = true;
+				bulletOwnerID = triangle.id;
+				break;
 			default:
 				return;
 			}
@@ -211,6 +281,15 @@ public class GameLoop extends JFrame implements ActionListener {
 
 		public boolean update() {
 			triangle.update();
+			if (fireBullet) {
+				if (bulletOwnerID == triangle.id) {
+					bulletList.add(new Bullet(triangle.x, triangle.y,
+							triangle.rot, triangle.id));
+				} else {
+					bulletList.add(new Bullet(remoteX, remoteY, remoteRot,
+							bulletOwnerID));
+				}
+			}
 			Iterator<Bullet> it = bulletList.iterator();
 			while (it.hasNext()) {
 				Bullet tempBullet = it.next();
@@ -248,7 +327,8 @@ public class GameLoop extends JFrame implements ActionListener {
 			float pArea = Math.abs((pX1 * pY2) + (pX2 * pY3) + (pX3 * pY1)
 					- (pX1 * pY3) - (pX3 * pY2) - (pX2 * pY1)) / 2;
 
-			if (Math.abs((P12 + P23 + P13) - pArea) < 0.0005 && player.id != collidingBullet.ownerID)
+			if (Math.abs((P12 + P23 + P13) - pArea) < 0.0005
+					&& player.id != collidingBullet.ownerID)
 				return true;
 
 			return false;
@@ -269,6 +349,18 @@ public class GameLoop extends JFrame implements ActionListener {
 			int[] yPoints = { (int) (drawY + triangle.y0),
 					(int) (drawY + triangle.y1), (int) (drawY + triangle.y2) };
 			g.drawPolygon(xPoints, yPoints, 3);
+
+			g.setColor(Color.GREEN);
+
+			int[] xRPoints = {
+					(int) (remoteX + triangle.rotateX(0, 10, remoteRot)),
+					(int) (remoteX + triangle.rotateX(5, -10, remoteRot)),
+					(int) (remoteX + triangle.rotateX(-5, -10, remoteRot)) };
+			int[] yRPoints = {
+					(int) (remoteY + triangle.rotateX(0, 10, remoteRot)),
+					(int) (remoteY + triangle.rotateX(5, -10, remoteRot)),
+					(int) (remoteY + triangle.rotateX(-5, -10, remoteRot)) };
+			g.drawPolygon(xRPoints, yRPoints, 3);
 
 			lastDrawX = drawX;
 			lastDrawY = drawY;
@@ -306,6 +398,7 @@ public class GameLoop extends JFrame implements ActionListener {
 			x = initX + x1;
 			y = initY + y1;
 			speed = (float) 0.2;
+			fireBullet = false;
 		}
 
 		public void update() {
@@ -330,7 +423,7 @@ public class GameLoop extends JFrame implements ActionListener {
 			}
 		}
 
-		private int rotateX(float px, float py, float angle) {
+		public int rotateX(float px, float py, float angle) {
 			int result = 0;
 
 			result = (int) (px * Math.cos(Math.toRadians(angle)) - py
@@ -339,7 +432,7 @@ public class GameLoop extends JFrame implements ActionListener {
 			return result;
 		}
 
-		private int rotateY(float px, float py, float angle) {
+		public int rotateY(float px, float py, float angle) {
 			int result = 0;
 
 			result = (int) (py * Math.cos(Math.toRadians(angle)) + px
@@ -353,7 +446,7 @@ public class GameLoop extends JFrame implements ActionListener {
 		}
 	}
 
-	private class Triangle // refactor
+	protected class Triangle // refactor
 	{
 		float x, y, lastX, lastY;
 		int width, height;
@@ -408,6 +501,8 @@ public class GameLoop extends JFrame implements ActionListener {
 		}
 
 		public void update() {
+			if (isServer == false)
+				id = 1;
 			if (isDead == false) {
 				lastX = x;
 				lastY = y;

@@ -7,12 +7,12 @@ public class Client implements Runnable {
 	private DataInputStream console = null;
 	private DataOutputStream streamOut = null;
 	private ClientThread client = null;
-
+	private String name = null;
 	private boolean isLoggedIn = false;
 
-	public Client(String serverName, int serverPort) {
+	public Client(String serverName, int serverPort, String clientName) {
 		
-
+		name = clientName;
 		System.out.println("Establishing connection. Please wait ...");
 		try {
 			socket = new Socket(serverName, serverPort);
@@ -30,9 +30,22 @@ public class Client implements Runnable {
 			try {
 				if (isLoggedIn == false) {
 					isLoggedIn = true;
-					//streamOut.writeUTF("login " + name);
 				} else {
-					streamOut.writeUTF(console.readLine());
+					String dataString = "";
+					String fireBullet = Boolean.toString(GameLoop.getInstance()
+							.isFireBullet());
+					String playerID = Integer
+							.toString(GameLoop.getInstance().gamePanel.triangle.id);
+					String playerX = Integer
+							.toString((int) GameLoop.getInstance().gamePanel.triangle.x);
+					String playerY = Integer
+							.toString((int) GameLoop.getInstance().gamePanel.triangle.y);
+					String playerRot = Integer
+							.toString((int) GameLoop.getInstance().gamePanel.triangle.rot);
+
+					dataString.concat("data " + fireBullet + " " + playerID + " " + playerX
+							+ " " + playerY + " " + playerRot);
+					streamOut.writeUTF(dataString);
 				}
 				streamOut.flush();
 			} catch (IOException ioe) {
@@ -43,11 +56,29 @@ public class Client implements Runnable {
 	}
 
 	public void handle(String msg) {
+		String delims = "[ ]+";
+		
+		String[] tokens = msg.split(delims);
+		
 		if (msg.equals(".bye")) {
 			System.out.println("Good bye. Press RETURN to exit ...");
 			stop();
 		} else
 			System.out.println(msg);
+		
+		if(tokens[0].equals("start")){
+			GameLoop.getInstance().startGame();
+		}
+		
+		if (msg.equals(tokens[0].equals("data"))) {
+			GameLoop.getInstance().setFireBullet(Boolean.valueOf(tokens[1]));
+			GameLoop.getInstance().setBulletOwner(Integer.valueOf(tokens[2]));
+			GameLoop.getInstance().setRemoteX(Integer.valueOf(tokens[3]));
+			GameLoop.getInstance().setRemoteY(Integer.valueOf(tokens[4]));
+			GameLoop.getInstance().setRemoteRot(Integer.valueOf(tokens[5]));
+		}
+	
+		//fireBullet ID X Y Rot
 	}
 
 	public void start() throws IOException {
