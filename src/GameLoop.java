@@ -25,6 +25,7 @@ public class GameLoop extends JFrame implements ActionListener {
 	private boolean paused = false;
 	private int fps = 60;
 	private int frameCount = 0;
+	
 
 	public GameLoop() {
 		super("Fixed Timestep Game Loop Test");
@@ -46,10 +47,7 @@ public class GameLoop extends JFrame implements ActionListener {
 
 	}
 
-	public static void main(String[] args) {
-		GameLoop glt = new GameLoop();
-		glt.setVisible(true);
-	}
+	
 
 	public void actionPerformed(ActionEvent e) {
 		Object s = e.getSource();
