@@ -63,13 +63,10 @@ public class Client implements Runnable {
 		if (msg.equals(".bye")) {
 			System.out.println("Good bye. Press RETURN to exit ...");
 			stop();
-		} else
-			System.out.println(msg);
-		
-		if(tokens[0].equals("start")){
+		} else if(tokens[0].equals("start")){
 			GameLoop.getInstance().startGame();
 		}
-		
+		else
 		if (msg.equals(tokens[0].equals("data"))) {
 			GameLoop.getInstance().setFireBullet(Boolean.valueOf(tokens[1]));
 			GameLoop.getInstance().setBulletOwner(Integer.valueOf(tokens[2]));

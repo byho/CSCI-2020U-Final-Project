@@ -80,8 +80,10 @@ public class Server implements Runnable {
 			GameLoop.getInstance().setRemoteRot(Integer.valueOf(tokens[5]));
 		}
 		
-		if(GameLoop.getInstance().getRunning())
+		if(GameLoop.getInstance().getGameStarted()){
 			clients[findClient(ID)].send("start");
+			GameLoop.getInstance().setGameStarted(false);
+		}
 
 		
 		String fireBullet = Boolean.toString(GameLoop.getInstance()

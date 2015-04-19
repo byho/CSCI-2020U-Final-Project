@@ -30,13 +30,20 @@ public class GameLoop extends JFrame implements ActionListener {
 	private int bulletOwnerID = 0;
 
 	private boolean isServer = true;
+	private boolean gameStarted = false;
 
-	private float remoteX = 0;
-	private float remoteY = 0;
+	private float remoteX = 250;
+	private float remoteY = 250;
 	private float remoteRot = 0;
 
 	private static GameLoop instance = null;
 	
+	public synchronized boolean getGameStarted(){
+		return gameStarted;
+	}
+	public synchronized void setGameStarted(boolean startBool){
+		gameStarted = startBool;
+	}
 	public synchronized boolean getRunning(){
 		return running;
 	}
@@ -123,6 +130,7 @@ public class GameLoop extends JFrame implements ActionListener {
 		if (isServer) {
 			if (s == startButton) {
 				running = !running;
+				gameStarted = true;
 			}
 		}
 		if (running) {
@@ -139,6 +147,7 @@ public class GameLoop extends JFrame implements ActionListener {
 	
 	public void startGame(){
 		running = true;
+		
 		runGameLoop();
 	}
 
@@ -170,6 +179,7 @@ public class GameLoop extends JFrame implements ActionListener {
 		final double TARGET_TIME_BETWEEN_RENDERS = 1000000000 / TARGET_FPS;
 
 		int lastSecondTime = (int) (lastUpdateTime / 1000000000);
+
 
 		while (running) {
 			double now = System.nanoTime();
@@ -346,21 +356,23 @@ public class GameLoop extends JFrame implements ActionListener {
 			int drawX = (int) ((triangle.x - triangle.lastX) * interpolation + triangle.lastX);
 			int drawY = (int) ((triangle.y - triangle.lastY) * interpolation + triangle.lastY);
 			int[] xPoints = { (int) (drawX + triangle.x0),
-					(int) (drawX + triangle.x1), (int) (drawX + triangle.x2) };
+							  (int) (drawX + triangle.x1), 
+							  (int) (drawX + triangle.x2) };
 			int[] yPoints = { (int) (drawY + triangle.y0),
-					(int) (drawY + triangle.y1), (int) (drawY + triangle.y2) };
+							  (int) (drawY + triangle.y1), 
+							  (int) (drawY + triangle.y2) };
 			g.drawPolygon(xPoints, yPoints, 3);
 
-			g.setColor(Color.GREEN);
+			g.setColor(Color.DARK_GRAY);
 
 			int[] xRPoints = {
 					(int) (remoteX + triangle.rotateX(0, 10, remoteRot)),
 					(int) (remoteX + triangle.rotateX(5, -10, remoteRot)),
 					(int) (remoteX + triangle.rotateX(-5, -10, remoteRot)) };
 			int[] yRPoints = {
-					(int) (remoteY + triangle.rotateX(0, 10, remoteRot)),
-					(int) (remoteY + triangle.rotateX(5, -10, remoteRot)),
-					(int) (remoteY + triangle.rotateX(-5, -10, remoteRot)) };
+					(int) (remoteY + triangle.rotateY(0, 10, remoteRot)),
+					(int) (remoteY + triangle.rotateY(5, -10, remoteRot)),
+					(int) (remoteY + triangle.rotateY(-5, -10, remoteRot)) };
 			g.drawPolygon(xRPoints, yRPoints, 3);
 
 			lastDrawX = drawX;
