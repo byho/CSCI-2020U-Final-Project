@@ -4,6 +4,10 @@ import javax.swing.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -32,7 +36,6 @@ public class GameLoop extends JFrame implements ActionListener {
 
 		startButton.addActionListener(this);
 		quitButton.addActionListener(this);
-
 
 		gamePanel.initTriangle();
 
@@ -93,7 +96,10 @@ public class GameLoop extends JFrame implements ActionListener {
 			if (!paused) {
 				while (now - lastUpdateTime > TIME_BETWEEN_UPDATES
 						&& updateCount < MAX_UPDATES_BEFORE_RENDER) {
-					updateGame();
+					if (updateGame()) {
+						running = false;
+						startButton.setText("Restart");
+					}
 					lastUpdateTime += TIME_BETWEEN_UPDATES;
 					updateCount++;
 				}
@@ -132,9 +138,9 @@ public class GameLoop extends JFrame implements ActionListener {
 		}
 	}
 
-	private void updateGame() {
+	private boolean updateGame() {
 		gamePanel.requestFocus();
-		gamePanel.update();
+		return gamePanel.update();
 	}
 
 	private void drawGame(float interpolation) {
@@ -191,36 +197,46 @@ public class GameLoop extends JFrame implements ActionListener {
 			interpolation = interp;
 		}
 
-		public void update() {
+		public boolean update() {
 			triangle.update();
 			Iterator<Bullet> it = bulletList.iterator();
 			while (it.hasNext()) {
 				Bullet tempBullet = it.next();
 				tempBullet.update();
-				if(isColliding(triangle,tempBullet)){
+				if (isColliding(triangle, tempBullet)) {
 					it.remove();
 					triangle.isDead = true;
 				}
 			}
+			if (triangle.deathCount > 15) {
+				ScoreWriter recordScore = new ScoreWriter("player 1",
+						triangle.deathCount);
+				return true;
+			}
+			return false;
 		}
 
 		private boolean isColliding(Triangle player, Bullet collidingBullet) {
 
 			float pX1 = player.x0 + player.x;
 			float pY1 = player.y0 + player.y;
-			float pX2 = player.x1+ player.x;
-			float pY2 = player.y1+ player.y;
-			float pX3 = player.x2+ player.x;
-			float pY3 = player.y2+ player.y;
+			float pX2 = player.x1 + player.x;
+			float pY2 = player.y1 + player.y;
+			float pX3 = player.x2 + player.x;
+			float pY3 = player.y2 + player.y;
 			float bX = collidingBullet.x;
 			float bY = collidingBullet.y;
 
-			float P12 = Math.abs((bX * pY1) + (pX1 * pY2) + (pX2 * bY) - (bX * pY2) - (pX2 * pY1) - (pX1 * bY)) / 2;
-			float P23 = Math.abs((bX * pY2) + (pX2 * pY3) + (pX3 * bY) - (bX * pY3) - (pX3 * pY2) - (pX2 * bY)) / 2;
-			float P13 = Math.abs((bX * pY1) + (pX1 * pY3) + (pX3 * bY) - (bX * pY3) - (pX3 * pY1) - (pX1 * bY)) / 2;
-			float pArea = Math.abs((pX1 * pY2) + (pX2 * pY3) + (pX3 * pY1) - (pX1 * pY3) - (pX3 * pY2) - (pX2 * pY1)) / 2;
-			
-			if (Math.abs((P12+P23+P13) - pArea) < 0.0005)
+			float P12 = Math.abs((bX * pY1) + (pX1 * pY2) + (pX2 * bY)
+					- (bX * pY2) - (pX2 * pY1) - (pX1 * bY)) / 2;
+			float P23 = Math.abs((bX * pY2) + (pX2 * pY3) + (pX3 * bY)
+					- (bX * pY3) - (pX3 * pY2) - (pX2 * bY)) / 2;
+			float P13 = Math.abs((bX * pY1) + (pX1 * pY3) + (pX3 * bY)
+					- (bX * pY3) - (pX3 * pY1) - (pX1 * bY)) / 2;
+			float pArea = Math.abs((pX1 * pY2) + (pX2 * pY3) + (pX3 * pY1)
+					- (pX1 * pY3) - (pX3 * pY2) - (pX2 * pY1)) / 2;
+
+			if (Math.abs((P12 + P23 + P13) - pArea) < 0.0005)
 				return true;
 
 			return false;
@@ -253,10 +269,10 @@ public class GameLoop extends JFrame implements ActionListener {
 			}
 
 			g.setColor(Color.BLACK);
-			if(triangle.deathCount < 20){
+			if (triangle.deathCount < 15) {
 				g.drawString("Death Count: " + triangle.deathCount, 5, 10);
 			} else {
-				g.drawString("GAME OVER" , 250, 250);
+				g.drawString("GAME OVER", 250, 250);
 			}
 			frameCount++;
 		}
@@ -264,23 +280,23 @@ public class GameLoop extends JFrame implements ActionListener {
 
 	private class Bullet { // refactor
 		float x, y;
-		float x1,y1;
+		float x1, y1;
 		float rot;
 		float speed;
 		boolean isDead = false;
 
 		public Bullet(float initX, float initY, float initRot) {
-			
+
 			rot = initRot;
-			x1 = rotateX(0,15,rot);
-			y1 = rotateY(0,15,rot);
+			x1 = rotateX(0, 15, rot);
+			y1 = rotateY(0, 15, rot);
 			x = initX + x1;
 			y = initY + y1;
 			speed = (float) 0.2;
 		}
 
 		public void update() {
-			
+
 			x += speed * (x1);
 			y += speed * (y1);
 
@@ -375,40 +391,40 @@ public class GameLoop extends JFrame implements ActionListener {
 		}
 
 		public void update() {
-			if(isDead == false){
-			lastX = x;
-			lastY = y;
+			if (isDead == false) {
+				lastX = x;
+				lastY = y;
 
-			x0 = rotateX(0, height / 2, rot);
-			x1 = rotateX(width / 2, -height / 2, rot);
-			x2 = rotateX(-width / 2, -height / 2, rot);
-			y0 = rotateY(0, height / 2, rot);
-			y1 = rotateY(width / 2, -height / 2, rot);
-			y2 = rotateY(-width / 2, -height / 2, rot);
+				x0 = rotateX(0, height / 2, rot);
+				x1 = rotateX(width / 2, -height / 2, rot);
+				x2 = rotateX(-width / 2, -height / 2, rot);
+				y0 = rotateY(0, height / 2, rot);
+				y1 = rotateY(width / 2, -height / 2, rot);
+				y2 = rotateY(-width / 2, -height / 2, rot);
 
-			xVelocity += speed * rotateX(0, height / 2, rot);
-			yVelocity += speed * rotateY(0, height / 2, rot);
+				xVelocity += speed * rotateX(0, height / 2, rot);
+				yVelocity += speed * rotateY(0, height / 2, rot);
 
-			speed = 0;
+				speed = 0;
 
-			x += xVelocity;
-			y += yVelocity;
+				x += xVelocity;
+				y += yVelocity;
 
-			if (x > gamePanel.getWidth()) {
+				if (x > gamePanel.getWidth()) {
 
-				x = 0;
+					x = 0;
 
-			} else if (x < 0) {
-				x = gamePanel.getWidth();
-			}
+				} else if (x < 0) {
+					x = gamePanel.getWidth();
+				}
 
-			if (y > gamePanel.getHeight()) {
+				if (y > gamePanel.getHeight()) {
 
-				y = 0;
+					y = 0;
 
-			} else if (y < 0) {
-				y = gamePanel.getHeight();
-			}
+				} else if (y < 0) {
+					y = gamePanel.getHeight();
+				}
 			} else {
 				deathCount++;
 				isDead = false;
@@ -423,6 +439,44 @@ public class GameLoop extends JFrame implements ActionListener {
 
 		public void draw(Graphics g) {
 			// refactor
+		}
+	}
+
+	private class ScoreWriter {
+		public ScoreWriter(String player, int killCount) {
+			// The name of the file to open.
+			String fileName = "Score.txt";
+
+			try {
+
+				File file = new File(fileName);
+
+				if (file.createNewFile()) {
+					System.out.println("File is created!");
+				} else {
+					System.out.println("File already exists.");
+				}
+				// Assume default encoding.
+				FileWriter fileWriter = new FileWriter(fileName);
+
+				// Always wrap FileWriter in BufferedWriter.
+				BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+
+				// Note that write() does not automatically
+				// append a newline character.
+				bufferedWriter.write("Player Name : ");
+				bufferedWriter.write(player);
+				bufferedWriter.newLine();
+				bufferedWriter.write("Total Kills : ");
+				bufferedWriter.write(Integer.toString(killCount));
+
+				// Always close files.
+				bufferedWriter.close();
+			} catch (IOException ex) {
+				System.out.println("Error writing to file '" + fileName + "'");
+				// Or we could just do this:
+				// ex.printStackTrace();
+			}
 		}
 	}
 }
