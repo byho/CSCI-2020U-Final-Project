@@ -187,7 +187,7 @@ public class GameLoop extends JFrame implements ActionListener {
 				break;
 			case KeyEvent.VK_SPACE:
 				gamePanel.bulletList.add(new Bullet(triangle.x, triangle.y,
-						triangle.rot));
+						triangle.rot, triangle.id));
 			default:
 				return;
 			}
@@ -195,7 +195,7 @@ public class GameLoop extends JFrame implements ActionListener {
 		}
 
 		public void initTriangle() {
-			triangle = new Triangle();
+			triangle = new Triangle(0);
 		}
 
 		public void setInterpolation(float interp) {
@@ -241,7 +241,7 @@ public class GameLoop extends JFrame implements ActionListener {
 			float pArea = Math.abs((pX1 * pY2) + (pX2 * pY3) + (pX3 * pY1)
 					- (pX1 * pY3) - (pX3 * pY2) - (pX2 * pY1)) / 2;
 
-			if (Math.abs((P12 + P23 + P13) - pArea) < 0.0005)
+			if (Math.abs((P12 + P23 + P13) - pArea) < 0.0005 && player.id != collidingBullet.ownerID)
 				return true;
 
 			return false;
@@ -289,9 +289,10 @@ public class GameLoop extends JFrame implements ActionListener {
 		float rot;
 		float speed;
 		boolean isDead = false;
+		int ownerID;
 
-		public Bullet(float initX, float initY, float initRot) {
-
+		public Bullet(float initX, float initY, float initRot, int newOwnerID) {
+			ownerID = newOwnerID;
 			rot = initRot;
 			x1 = rotateX(0, 15, rot);
 			y1 = rotateY(0, 15, rot);
@@ -358,8 +359,9 @@ public class GameLoop extends JFrame implements ActionListener {
 		int deathCount = 0;
 		String name = "sleepy";
 		int winCount = 0;
+		int id = 0;
 
-		public Triangle() {
+		public Triangle(int newID) {
 			width = 10;
 			height = 20;
 			x = (float) (Math.random() * (400) + 50);
@@ -376,6 +378,7 @@ public class GameLoop extends JFrame implements ActionListener {
 			y0 = 0;
 			y1 = 0;
 			y2 = 0;
+			id = newID;
 			ScoreReader scoreReader = new ScoreReader(this);
 		}
 
