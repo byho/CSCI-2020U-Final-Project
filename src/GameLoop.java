@@ -4,12 +4,17 @@ import javax.swing.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class GameLoop extends JFrame implements ActionListener {
 	private GamePanel gamePanel = new GamePanel();
@@ -209,8 +214,8 @@ public class GameLoop extends JFrame implements ActionListener {
 				}
 			}
 			if (triangle.deathCount > 15) {
-				ScoreWriter recordScore = new ScoreWriter("player 1",
-						triangle.deathCount);
+				ScoreWriter recordScore = new ScoreWriter(triangle.name,
+						triangle.winCount);
 				return true;
 			}
 			return false;
@@ -351,6 +356,8 @@ public class GameLoop extends JFrame implements ActionListener {
 		float y0, y1, y2;
 		boolean isDead = false;
 		int deathCount = 0;
+		String name = "sleepy";
+		int winCount = 0;
 
 		public Triangle() {
 			width = 10;
@@ -369,7 +376,7 @@ public class GameLoop extends JFrame implements ActionListener {
 			y0 = 0;
 			y1 = 0;
 			y2 = 0;
-
+			ScoreReader scoreReader = new ScoreReader(this);
 		}
 
 		private int rotateX(float px, float py, float angle) {
@@ -443,7 +450,7 @@ public class GameLoop extends JFrame implements ActionListener {
 	}
 
 	private class ScoreWriter {
-		public ScoreWriter(String player, int killCount) {
+		public ScoreWriter(String player, int winCount) {
 			// The name of the file to open.
 			String fileName = "Score.txt";
 
@@ -464,16 +471,61 @@ public class GameLoop extends JFrame implements ActionListener {
 
 				// Note that write() does not automatically
 				// append a newline character.
-				bufferedWriter.write("Player Name : ");
+				bufferedWriter.write("Name : ");
 				bufferedWriter.write(player);
 				bufferedWriter.newLine();
-				bufferedWriter.write("Total Kills : ");
-				bufferedWriter.write(Integer.toString(killCount));
+				bufferedWriter.write("Wins : ");
+				bufferedWriter.write(Integer.toString(winCount));
 
 				// Always close files.
 				bufferedWriter.close();
 			} catch (IOException ex) {
 				System.out.println("Error writing to file '" + fileName + "'");
+				// Or we could just do this:
+				// ex.printStackTrace();
+			}
+		}
+	}
+
+	public class ScoreReader {
+
+		public ScoreReader(Triangle player) {
+			// The name of the file to open.
+			String fileName = "Score.txt";
+
+			// This will reference one line at a time
+			String line = null;
+
+			try {
+				// FileReader reads text files in the default encoding.
+				FileReader fileReader = new FileReader(fileName);
+
+				// Always wrap FileReader in BufferedReader.
+				BufferedReader bufferedReader = new BufferedReader(fileReader);
+
+				Pattern nameP = Pattern.compile("([A-Z- a-z]+)");
+				Pattern scoreP = Pattern.compile("([0-9]+)");
+
+				while ((line = bufferedReader.readLine()) != null) {
+
+					line.substring(6);
+					Matcher m0 = nameP.matcher(line);
+					Matcher m1 = scoreP.matcher(line);
+					while (m0.find()) {
+						player.name = m0.group(1);
+					}
+					while (m1.find()) {
+						player.winCount = Integer.valueOf(m1.group(1));
+					}
+
+				}
+
+				// Always close files.
+				bufferedReader.close();
+			} catch (FileNotFoundException ex) {
+				System.out.println("Unable to open file '" + fileName + "'");
+			} catch (IOException ex) {
+				System.out.println("Error reading file '" + fileName + "'");
 				// Or we could just do this:
 				// ex.printStackTrace();
 			}

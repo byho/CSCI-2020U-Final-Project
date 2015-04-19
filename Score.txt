@@ -1,2 +1,2 @@
-Player Name : player 1
-Total Kills : 16
+Name :  
+Wins : 16
