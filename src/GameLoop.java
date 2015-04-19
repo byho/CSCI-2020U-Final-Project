@@ -26,8 +26,10 @@ public class GameLoop extends JFrame implements ActionListener {
 	private int fps = 60;
 	private int frameCount = 0;
 	
+	private static GameLoop instance = null;
+	
 
-	public GameLoop() {
+	protected GameLoop() {
 		super("Fixed Timestep Game Loop Test");
 		Container cp = getContentPane();
 		cp.setLayout(new BorderLayout());
@@ -45,6 +47,13 @@ public class GameLoop extends JFrame implements ActionListener {
 
 		gamePanel.initTriangle();
 
+	}
+	
+	public synchronized static GameLoop getInstance(){
+		if(instance == null){
+			instance = new GameLoop();
+		}
+		return instance;
 	}
 
 	
