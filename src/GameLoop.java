@@ -247,6 +247,7 @@ public class GameLoop extends JFrame implements ActionListener {
 
 		Triangle triangle;
 		ArrayList<Bullet> bulletList = new ArrayList<Bullet>();
+		ArrayList<Bullet> remoteBullets = new ArrayList<Bullet>();
 
 		public GamePanel() {
 			this.setFocusable(true);
@@ -273,8 +274,12 @@ public class GameLoop extends JFrame implements ActionListener {
 				gamePanel.triangle.rot += 5;
 				break;
 			case KeyEvent.VK_SPACE:
-				fireBullet = true;
-				bulletOwnerID = triangle.id;
+				
+				bulletList.add(new Bullet(triangle.x, triangle.y,
+						triangle.rot, triangle.id));
+				remoteBullets.add(new Bullet(remoteX, remoteY, remoteRot,
+						bulletOwnerID));
+				//fireBullet = true;
 				break;
 			default:
 				return;
@@ -293,15 +298,12 @@ public class GameLoop extends JFrame implements ActionListener {
 		public boolean update() {
 			triangle.update();
 			if (fireBullet) {
-				if (bulletOwnerID == triangle.id) {
-					bulletList.add(new Bullet(triangle.x, triangle.y,
-							triangle.rot, triangle.id));
-				} else {
-					bulletList.add(new Bullet(remoteX, remoteY, remoteRot,
-							bulletOwnerID));
-				}
+
+				remoteBullets.add(new Bullet(remoteX, remoteY, remoteRot,
+						bulletOwnerID));
+
 			}
-			Iterator<Bullet> it = bulletList.iterator();
+			Iterator<Bullet> it = remoteBullets.iterator();
 			while (it.hasNext()) {
 				Bullet tempBullet = it.next();
 				tempBullet.update();
@@ -310,6 +312,17 @@ public class GameLoop extends JFrame implements ActionListener {
 					triangle.isDead = true;
 				}
 			}
+			
+			Iterator<Bullet> it2 = bulletList.iterator();
+			while (it2.hasNext()) {
+				Bullet tempBullet = it2.next();
+				tempBullet.update();
+				if (isColliding(triangle, tempBullet)) {
+					it.remove();
+					triangle.isDead = true;
+				}
+			}
+			
 			if (triangle.deathCount > 15) {
 				ScoreWriter recordScore = new ScoreWriter(triangle.name,
 						triangle.winCount);
@@ -338,12 +351,12 @@ public class GameLoop extends JFrame implements ActionListener {
 			float pArea = Math.abs((pX1 * pY2) + (pX2 * pY3) + (pX3 * pY1)
 					- (pX1 * pY3) - (pX3 * pY2) - (pX2 * pY1)) / 2;
 
-			if (Math.abs((P12 + P23 + P13) - pArea) < 0.0005
-					&& player.id != collidingBullet.ownerID)
+			if (Math.abs((P12 + P23 + P13) - pArea) < 0.0005)
 				return true;
 
 			return false;
 		}
+		
 
 		public void paintComponent(Graphics g) {
 			// erase last triangle
@@ -382,6 +395,13 @@ public class GameLoop extends JFrame implements ActionListener {
 			Iterator<Bullet> it = bulletList.iterator();
 			while (it.hasNext()) {
 				Bullet temp = it.next();
+				g.drawOval((int) temp.x, (int) temp.y, 2, 2);
+			}
+			
+			g.setColor(Color.ORANGE);
+			Iterator<Bullet> it2 = remoteBullets.iterator();
+			while (it2.hasNext()) {
+				Bullet temp = it2.next();
 				g.drawOval((int) temp.x, (int) temp.y, 2, 2);
 			}
 

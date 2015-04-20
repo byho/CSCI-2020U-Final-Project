@@ -38,6 +38,7 @@ public class ServerThread extends Thread
       {  try
          {  
     	  server.handle(ID, streamIn.readUTF());
+    	  Thread.yield();
          }
          catch(IOException ioe)
          {  System.out.println(ID + " ERROR reading: " + ioe.getMessage());

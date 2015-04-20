@@ -73,7 +73,7 @@ public class Server implements Runnable {
 			remove(ID);
 		}
 		if (tokens[0].equals("data")) {
-			GameLoop.getInstance().setFireBullet(Boolean.valueOf(tokens[1]));
+			GameLoop.getInstance().setFireBullet(Boolean.parseBoolean(tokens[1]));
 			GameLoop.getInstance().setBulletOwner(Integer.valueOf(tokens[2]));
 			GameLoop.getInstance().setRemoteX(Integer.valueOf(tokens[3]));
 			GameLoop.getInstance().setRemoteY(Integer.valueOf(tokens[4]));
