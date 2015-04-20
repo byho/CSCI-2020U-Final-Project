@@ -1,2 +1,2 @@
 Name :  
-Wins : 16
+Total Deaths : 32

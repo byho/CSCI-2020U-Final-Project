@@ -1,4 +1,3 @@
-//based on http://www.java-gaming.org/index.php?topic=24220.0
 
 import javax.swing.*;
 
@@ -99,7 +98,7 @@ public class GameLoop extends JFrame implements ActionListener {
 
 
 	protected GameLoop() {
-		super("Fixed Timestep Game Loop Test");
+		super("Triangle Shooty");
 		Container cp = getContentPane();
 		cp.setLayout(new BorderLayout());
 		JPanel p = new JPanel();
@@ -323,7 +322,7 @@ public class GameLoop extends JFrame implements ActionListener {
 			
 			if (triangle.deathCount > 15) {
 				ScoreWriter recordScore = new ScoreWriter(triangle.name,
-						triangle.winCount);
+						triangle.deathCount + triangle.winCount);
 				return true;
 			}
 			return false;
@@ -610,7 +609,7 @@ public class GameLoop extends JFrame implements ActionListener {
 				bufferedWriter.write("Name : ");
 				bufferedWriter.write(player);
 				bufferedWriter.newLine();
-				bufferedWriter.write("Wins : ");
+				bufferedWriter.write("Total Deaths : ");
 				bufferedWriter.write(Integer.toString(winCount));
 
 				// Always close files.
