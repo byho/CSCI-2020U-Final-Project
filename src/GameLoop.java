@@ -275,11 +275,8 @@ public class GameLoop extends JFrame implements ActionListener {
 				break;
 			case KeyEvent.VK_SPACE:
 				
-				bulletList.add(new Bullet(triangle.x, triangle.y,
-						triangle.rot, triangle.id));
-				remoteBullets.add(new Bullet(remoteX, remoteY, remoteRot,
-						bulletOwnerID));
-				//fireBullet = true;
+				
+				fireBullet = true;
 				break;
 			default:
 				return;
@@ -299,9 +296,10 @@ public class GameLoop extends JFrame implements ActionListener {
 			triangle.update();
 			if (fireBullet) {
 
+				bulletList.add(new Bullet(triangle.x, triangle.y,
+						triangle.rot, triangle.id));
 				remoteBullets.add(new Bullet(remoteX, remoteY, remoteRot,
 						bulletOwnerID));
-
 			}
 			Iterator<Bullet> it = remoteBullets.iterator();
 			while (it.hasNext()) {
