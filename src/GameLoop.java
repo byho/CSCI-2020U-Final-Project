@@ -316,7 +316,7 @@ public class GameLoop extends JFrame implements ActionListener {
 				Bullet tempBullet = it2.next();
 				tempBullet.update();
 				if (isColliding(triangle, tempBullet)) {
-					it.remove();
+					it2.remove();
 					triangle.isDead = true;
 				}
 			}
