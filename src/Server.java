@@ -72,7 +72,7 @@ public class Server implements Runnable {
 			clients[findClient(ID)].send(".bye");
 			remove(ID);
 		}
-		if (input.equals(tokens[0].equals("data"))) {
+		if (tokens[0].equals("data")) {
 			GameLoop.getInstance().setFireBullet(Boolean.valueOf(tokens[1]));
 			GameLoop.getInstance().setBulletOwner(Integer.valueOf(tokens[2]));
 			GameLoop.getInstance().setRemoteX(Integer.valueOf(tokens[3]));
@@ -97,7 +97,7 @@ public class Server implements Runnable {
 		String playerRot = Integer
 				.toString((int) GameLoop.getInstance().gamePanel.triangle.rot);
 
-		dataString.concat("data " + fireBullet + " " + playerID + " " + playerX
+		dataString = ("data " + fireBullet + " " + playerID + " " + playerX
 				+ " " + playerY + " " + playerRot);
 
 		clients[findClient(ID)].send(dataString);
